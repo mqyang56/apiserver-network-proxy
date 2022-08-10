@@ -36,7 +36,7 @@ type Tunnel struct {
 }
 
 func createBuffer() interface{} {
-	buffer := make([]byte, 1*1024*1024)
+	buffer := make([]byte, 2*1024*1024)
 	return buffer
 }
 
