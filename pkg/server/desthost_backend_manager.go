@@ -35,6 +35,11 @@ func NewDestHostBackendManager() *DestHostBackendManager {
 			[]agent.IdentifierType{agent.IPv4, agent.IPv6, agent.Host})}
 }
 
+// ListAgentIds return all connected agent ids
+func (dibm *DestHostBackendManager) ListAgentIds() []string {
+	return dibm.agentIDs
+}
+
 // Backend tries to get a backend associating to the request destination host.
 func (dibm *DestHostBackendManager) Backend(ctx context.Context) (Backend, error) {
 	dibm.mu.RLock()
