@@ -483,6 +483,13 @@ func (a *Client) Serve() {
 	}
 }
 
+func createBuffer() interface{} {
+	buffer := make([]byte, 1*1024*1024)
+	return buffer
+}
+
+var bufferPool = &sync.Pool{New: createBuffer}
+
 func (a *Client) remoteToProxy(connID int64, ctx *connContext) {
 	defer func() {
 		if panicInfo := recover(); panicInfo != nil {
@@ -493,12 +500,14 @@ func (a *Client) remoteToProxy(connID int64, ctx *connContext) {
 	}()
 	defer ctx.cleanup()
 
-	var buf [10 * 1024 * 1024]byte
 	resp := &client.Packet{
 		Type: client.PacketType_DATA,
 	}
 
+	buf := bufferPool.Get().([]byte)
+	defer bufferPool.Put(buf)
 	for {
+
 		n, err := ctx.conn.Read(buf[:])
 		klog.V(5).InfoS("received data from remote", "bytes", n, "connectionID", connID)
 
