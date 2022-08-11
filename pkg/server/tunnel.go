@@ -35,6 +35,13 @@ type Tunnel struct {
 	Server *ProxyServer
 }
 
+func createBuffer() interface{} {
+	buffer := make([]byte, 2*1024*1024)
+	return buffer
+}
+
+var bufferPool = &sync.Pool{New: createBuffer}
+
 func (t *Tunnel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	metrics.Metrics.HTTPConnectionInc()
 	defer metrics.Metrics.HTTPConnectionDec()
@@ -133,13 +140,14 @@ func (t *Tunnel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	klog.V(3).InfoS("Starting proxy to host", "host", r.Host)
-	pkt := make([]byte, 10*1024*1024) // Match GRPC Window size
 
 	connID := connection.connectID
 	agentID := connection.agentID
 	var acc int
-
+	pkt := bufferPool.Get().([]byte)
+	defer bufferPool.Put(pkt)
 	for {
+
 		n, err := bufrw.Read(pkt[:])
 		acc += n
 		if err == io.EOF {
